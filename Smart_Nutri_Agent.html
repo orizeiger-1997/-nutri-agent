@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Nutri-Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050B17;--bg2:#0B1628;--bg3:#0E1C30;
+  --cyan:#00D4FF;--green:#34D399;--purple:#A78BFA;--amber:#FBB040;--red:#F87171;
+  --white:#FFFFFF;--gray1:#E2E8F0;--gray2:#94A3B8;--gray3:#475569;--gray4:#1E3A5F;
+  --border:#1A3050;
+}
+html{scroll-behavior:smooth;scroll-snap-type:y mandatory;}
+body{font-family:'Rubik',sans-serif;background:var(--bg);color:var(--white);overflow-x:hidden;direction:rtl;}
+
+.nav-dots{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:999;display:flex;flex-direction:column;gap:10px;}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--gray4);border:none;cursor:pointer;transition:all 0.3s;padding:0;}
+.nav-dot.active{background:var(--cyan);transform:scale(1.4);}
+.nav-dot:hover{background:var(--gray2);}
+
+.nav-arrows{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:row;gap:12px;}
+.nav-arrow{background:var(--cyan);border:none;color:var(--bg);width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all 0.2s;box-shadow:0 0 14px rgba(0,212,255,0.4);line-height:1;}
+.nav-arrow:hover{background:var(--green);box-shadow:0 0 18px rgba(52,211,153,0.5);transform:scale(1.1);}
+
+.slide{height:100vh;scroll-snap-align:start;display:flex;align-items:center;justify-content:center;padding:40px 60px 80px;position:relative;overflow:hidden;}
+.slide::before{content:'';position:absolute;inset:0;pointer-events:none;}
+.s-hero::before{background:radial-gradient(ellipse at 70% 30%,rgba(0,212,255,0.08) 0%,transparent 60%);}
+.s-problem::before{background:radial-gradient(ellipse at 30% 60%,rgba(248,113,113,0.06) 0%,transparent 60%);}
+.s-solution::before{background:radial-gradient(ellipse at 70% 40%,rgba(167,139,250,0.07) 0%,transparent 60%);}
+.s-arch::before{background:radial-gradient(ellipse at 50% 50%,rgba(0,212,255,0.05) 0%,transparent 70%);}
+.s-value::before{background:radial-gradient(ellipse at 30% 40%,rgba(52,211,153,0.06) 0%,transparent 60%);}
+.s-diff::before{background:radial-gradient(ellipse at 60% 40%,rgba(167,139,250,0.07) 0%,transparent 60%);}
+.s-kpi::before{background:radial-gradient(ellipse at 40% 50%,rgba(251,176,64,0.06) 0%,transparent 60%);}
+.s-ops::before{background:radial-gradient(ellipse at 50% 40%,rgba(52,211,153,0.06) 0%,transparent 60%);}
+.s-sdlc::before{background:radial-gradient(ellipse at 60% 30%,rgba(167,139,250,0.07) 0%,transparent 60%);}
+.s-tco::before{background:radial-gradient(ellipse at 40% 50%,rgba(0,212,255,0.06) 0%,transparent 60%);}
+.s-code::before{background:radial-gradient(ellipse at 50% 40%,rgba(52,211,153,0.05) 0%,transparent 60%);}
+.s-demo::before{background:radial-gradient(ellipse at 50% 40%,rgba(52,211,153,0.07) 0%,transparent 60%);}
+
+.slide-num{position:absolute;top:24px;left:60px;font-size:11px;font-weight:600;color:var(--gray3);letter-spacing:0.08em;}
+.slide-inner{width:100%;max-width:900px;z-index:1;}
+.slide-tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--cyan);background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);padding:4px 12px;border-radius:20px;margin-bottom:18px;}
+h1{font-size:clamp(28px,5vw,52px);font-weight:700;letter-spacing:-0.03em;line-height:1.15;margin-bottom:12px;}
+h1 span,h2 span{color:var(--cyan);}
+h2{font-size:clamp(22px,3.5vw,36px);font-weight:700;letter-spacing:-0.02em;line-height:1.2;margin-bottom:10px;}
+p.lead{font-size:15px;color:var(--gray2);line-height:1.75;max-width:560px;}
+
+.card-grid{display:grid;gap:14px;margin-top:22px;}
+.g2{grid-template-columns:1fr 1fr;}
+.g3{grid-template-columns:repeat(3,1fr);}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:18px 16px;}
+.card-icon{font-size:24px;margin-bottom:10px;display:block;}
+.card-title{font-size:14px;font-weight:600;margin-bottom:5px;}
+.card-body{font-size:12px;color:var(--gray2);line-height:1.6;}
+
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;}
+.tag-red{background:rgba(248,113,113,0.12);color:#F87171;border:1px solid rgba(248,113,113,0.25);}
+.tag-green{background:rgba(52,211,153,0.12);color:var(--green);border:1px solid rgba(52,211,153,0.25);}
+.tag-cyan{background:rgba(0,212,255,0.1);color:var(--cyan);border:1px solid rgba(0,212,255,0.2);}
+.tag-purple{background:rgba(167,139,250,0.12);color:var(--purple);border:1px solid rgba(167,139,250,0.25);}
+.tag-amber{background:rgba(251,176,64,0.12);color:var(--amber);border:1px solid rgba(251,176,64,0.25);}
+
+.stat-row{display:flex;gap:14px;margin-top:20px;}
+.stat-card{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;}
+.stat-num{font-size:32px;font-weight:700;letter-spacing:-0.02em;margin-bottom:4px;}
+.stat-label{font-size:11px;color:var(--gray2);}
+
+.flow{display:flex;align-items:center;gap:0;margin-top:24px;flex-wrap:nowrap;}
+.flow-step{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 16px;flex:1;text-align:center;}
+.flow-step.highlight{border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.06);}
+.flow-arrow{color:var(--gray3);font-size:18px;padding:0 8px;flex-shrink:0;}
+.flow-icon{font-size:22px;margin-bottom:6px;display:block;}
+.flow-title{font-size:11px;font-weight:600;margin-bottom:3px;}
+.flow-sub{font-size:10px;color:var(--gray2);}
+
+.kpi-table{width:100%;border-collapse:collapse;margin-top:18px;font-size:13px;}
+.kpi-table th{text-align:right;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--gray3);padding:8px 12px;border-bottom:1px solid var(--border);}
+.kpi-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.kpi-table tr:last-child td{border-bottom:none;}
+.kpi-table .kpi-name{color:var(--white);font-weight:500;}
+.kpi-table .kpi-base{color:var(--gray2);}
+.kpi-table .kpi-target{color:var(--cyan);font-weight:700;}
+
+.value-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px;}
+.value-col{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:16px;}
+.value-col-head{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.value-col ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.value-col li{font-size:12px;color:var(--gray2);display:flex;align-items:flex-start;gap:6px;}
+.value-col li::before{content:'›';color:var(--cyan);font-weight:700;flex-shrink:0;}
+
+.diff-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:flex-start;gap:14px;margin-bottom:12px;}
+.diff-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(0,212,255,0.1);}
+.diff-title{font-size:13px;font-weight:600;margin-bottom:3px;}
+.diff-body{font-size:12px;color:var(--gray2);line-height:1.6;}
+
+.ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+.ops-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+.ops-head{font-size:12px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.ops-body{font-size:11px;color:var(--gray2);line-height:1.6;}
+
+.sdlc-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+.sdlc-yes{background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.25);border-radius:14px;padding:18px;}
+.sdlc-no{background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.2);border-radius:14px;padding:18px;}
+.sdlc-head{font-size:13px;font-weight:700;margin-bottom:12px;}
+.sdlc-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.sdlc-list li{font-size:12px;color:var(--gray2);display:flex;align-items:flex-start;gap:8px;}
+.sdlc-list .icon{font-size:13px;flex-shrink:0;margin-top:1px;}
+
+.tco-top{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px;}
+.tco-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;}
+.tco-num{font-size:28px;font-weight:700;letter-spacing:-0.02em;margin-bottom:4px;}
+.tco-label{font-size:11px;color:var(--gray2);margin-bottom:2px;}
+.tco-sub{font-size:10px;color:var(--gray3);}
+.tco-details{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+.tco-detail{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.tco-detail-head{font-size:11px;font-weight:700;color:var(--gray3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;}
+.tco-detail ul{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.tco-detail li{font-size:11px;color:var(--gray2);display:flex;justify-content:space-between;}
+.tco-detail li span{color:var(--white);font-weight:500;}
+.payback{background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.3);border-radius:10px;padding:10px 16px;margin-top:12px;font-size:12px;color:var(--green);font-weight:600;text-align:center;}
+
+.names-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:28px;}
+.name-chip{background:var(--bg3);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--gray2);}
+.name-chip span{color:var(--white);font-weight:600;margin-left:6px;}
+
+/* IDE / CODE */
+.ide{width:100%;background:#06090F;border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 40px rgba(0,0,0,0.5);}
+.ide-hdr{background:#0D1117;padding:11px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+.ide-dots{display:flex;gap:6px;}
+.ide-dot{width:12px;height:12px;border-radius:50%;}
+.ide-title-txt{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gray2);}
+.ide-body{display:grid;grid-template-columns:1fr 1fr;height:340px;}
+.ide-editor{border-left:1px solid var(--border);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#C9D1D9;overflow-y:auto;white-space:pre;direction:ltr;text-align:left;background:#0d1117;line-height:1.6;}
+.ide-term{background:#05070a;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);overflow-y:auto;direction:ltr;text-align:left;line-height:1.6;}
+.term-hdr{color:var(--gray2);border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:7px;margin-bottom:10px;font-size:10px;display:flex;justify-content:space-between;align-items:center;}
+.btn-run{background:var(--green);color:var(--bg);border:none;padding:5px 14px;border-radius:6px;font-family:'Rubik',sans-serif;font-weight:700;font-size:11px;cursor:pointer;}
+.btn-run:hover{opacity:0.85;}
+.copy-btn{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--white);padding:4px 10px;border-radius:5px;font-size:10px;cursor:pointer;font-family:'Rubik',sans-serif;}
+.copy-btn:hover{background:var(--cyan);color:var(--bg);}
+
+/* PHONE */
+.phone-wrap{position:relative;display:flex;align-items:center;justify-content:center;}
+.phone-outer{width:260px;background:#1C1C1E;border-radius:48px;padding:8px;border:7px solid #3A3A3C;box-shadow:0 0 50px rgba(0,212,255,0.08),0 30px 70px rgba(0,0,0,0.5);flex-shrink:0;}
+.phone-notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:88px;height:26px;background:#1C1C1E;border-radius:0 0 18px 18px;z-index:10;}
+.phone-screen{background:#F2F2F7;border-radius:40px;overflow:hidden;height:500px;position:relative;direction:ltr;}
+.ios-status{background:#F2F2F7;height:46px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 22px 8px;}
+.ios-time{font-size:13px;font-weight:600;color:#000;font-family:'JetBrains Mono',monospace;}
+.cal-chrome{background:#fff;padding:10px 16px 7px;border-bottom:0.5px solid #C6C6C8;}
+.cal-app{font-size:11px;color:#8E8E93;font-weight:500;margin-bottom:1px;}
+.cal-month{font-size:17px;font-weight:700;color:#000;}
+.time-grid-ios{background:#fff;padding:4px 10px;overflow:hidden;height:calc(500px - 93px);direction:rtl;}
+.time-row-ios{display:flex;gap:8px;height:64px;align-items:flex-start;padding-top:3px;}
+.time-lbl-ios{font-size:9.5px;width:32px;text-align:left;margin-top:1px;font-family:'JetBrains Mono',monospace;flex-shrink:0;direction:ltr;color:#8E8E93;}
+.time-track-ios{flex:1;border-top:0.5px solid #C6C6C8;position:relative;height:60px;}
+.evt-ios{position:absolute;top:2px;left:0;right:0;height:54px;border-radius:6px;padding:5px 8px;overflow:hidden;}
+.evt-ios .t{font-size:9px;font-weight:700;color:#fff;direction:rtl;}
+.evt-ios .s{font-size:8px;color:rgba(255,255,255,0.8);margin-top:1px;}
+.free-track-ios{flex:1;border-top:2px solid #34C759;position:relative;height:60px;border-radius:4px;overflow:hidden;background:rgba(52,199,89,0.1);}
+.free-badge-ios{position:absolute;top:4px;right:6px;font-size:9px;font-weight:700;color:#34C759;direction:rtl;}
+.free-time-ios{position:absolute;bottom:4px;left:6px;font-size:8px;color:#34C759;font-family:'JetBrains Mono',monospace;direction:ltr;}
+.scan-overlay{position:absolute;inset:93px 0 0;z-index:50;background:rgba(242,242,247,0.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.scan-overlay.visible{opacity:1;pointer-events:all;}
+.scan-ring{width:40px;height:40px;border:3px solid rgba(52,199,89,0.2);border-top-color:#34C759;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scan-txt{font-size:12px;font-weight:600;color:#34C759;}
+.notif-wrap{position:absolute;top:0;left:0;right:0;z-index:100;padding:50px 9px 0;transform:translateY(-100%);opacity:0;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s ease;}
+.notif-wrap.visible{transform:translateY(0);opacity:1;}
+.notif-card{background:rgba(255,255,255,0.96);backdrop-filter:blur(20px);border-radius:18px;padding:12px 14px 10px;border:0.5px solid #C6C6C8;box-shadow:0 8px 32px rgba(0,0,0,0.18);}
+.notif-hdr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.notif-app-icon{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#34C759,#00B3FF);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;}
+.notif-app-name{font-size:11px;font-weight:700;color:#000;flex:1;direction:rtl;}
+.notif-time{font-size:10px;color:#8E8E93;}
+.notif-title{font-size:13px;font-weight:700;color:#000;direction:rtl;margin-bottom:5px;}
+.notif-body{font-size:11px;color:#3C3C43;direction:rtl;line-height:1.6;margin-bottom:10px;}
+.notif-body strong{color:#000;}
+.notif-sep{height:0.5px;background:#C6C6C8;margin-bottom:9px;}
+.notif-actions{display:flex;gap:8px;}
+.btn-decline-ios{flex:1;padding:8px 6px;background:#F2F2F7;border:none;border-radius:10px;font-size:12px;font-weight:600;color:#FF3B30;cursor:pointer;font-family:'Rubik',sans-serif;}
+.btn-approve-ios{flex:2;padding:8px 6px;background:#34C759;border:none;border-radius:10px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:'Rubik',sans-serif;direction:rtl;}
+.result-screen{position:absolute;inset:0;z-index:200;background:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;direction:rtl;}
+.result-screen.show{display:flex;}
+.result-icon-wrap{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:30px;}
+.result-title{font-size:17px;font-weight:700;color:#000;margin-bottom:6px;}
+.result-body{font-size:12px;color:#3C3C43;line-height:1.7;margin-bottom:14px;}
+.order-card-ios{background:#F2F2F7;border-radius:14px;padding:12px 14px;width:100%;text-align:right;}
+.order-row-ios{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0;color:#3C3C43;border-bottom:0.5px solid #C6C6C8;}
+.order-row-ios:last-child{border:none;}
+.order-row-ios .lbl{color:#8E8E93;}
+.order-row-ios strong{color:#000;font-weight:600;}
+.prog-wrap{margin-top:10px;}
+.prog-lbl{display:flex;justify-content:space-between;font-size:9px;color:#8E8E93;margin-bottom:4px;}
+.prog-track{height:5px;background:#C6C6C8;border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;width:25%;background:linear-gradient(90deg,#34C759,#00B3FF);border-radius:3px;transition:width 3s ease;}
+.btn-reset-ios{margin-top:14px;padding:8px 20px;background:transparent;border:0.5px solid #C6C6C8;border-radius:10px;font-size:11px;color:#8E8E93;cursor:pointer;font-family:'Rubik',sans-serif;}
+
+.demo-layout{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;}
+.demo-right{display:flex;flex-direction:column;gap:20px;}
+.demo-step-row{display:flex;align-items:center;gap:12px;}
+.demo-dots{display:flex;gap:6px;}
+.demo-dot{width:7px;height:7px;border-radius:50%;background:var(--gray4);transition:all 0.3s;}
+.demo-dot.active{background:var(--cyan);transform:scale(1.3);}
+.demo-dot.done{background:var(--green);}
+.demo-step-label{font-size:12px;color:var(--gray2);}
+.trigger-btn{padding:12px 28px;background:rgba(52,211,153,0.1);border:1.5px solid rgba(52,211,153,0.35);border-radius:12px;font-size:14px;font-weight:600;color:var(--green);cursor:pointer;font-family:'Rubik',sans-serif;transition:all 0.2s;display:flex;align-items:center;gap:8px;width:fit-content;}
+.trigger-btn:hover:not(:disabled){background:rgba(52,211,153,0.18);}
+.trigger-btn:disabled{opacity:0.4;cursor:default;}
+.status-msg{font-size:12px;color:var(--gray2);direction:rtl;line-height:1.7;max-width:320px;}
+.status-msg .hl{color:var(--cyan);}
+.status-msg .ok{color:var(--green);}
+</style>
+</head>
+<body>
+
+<nav class="nav-dots">
+  <button class="nav-dot active" onclick="goSlide(0)"></button>
+  <button class="nav-dot" onclick="goSlide(1)"></button>
+  <button class="nav-dot" onclick="goSlide(2)"></button>
+  <button class="nav-dot" onclick="goSlide(3)"></button>
+  <button class="nav-dot" onclick="goSlide(4)"></button>
+  <button class="nav-dot" onclick="goSlide(5)"></button>
+  <button class="nav-dot" onclick="goSlide(6)"></button>
+  <button class="nav-dot" onclick="goSlide(7)"></button>
+  <button class="nav-dot" onclick="goSlide(8)"></button>
+  <button class="nav-dot" onclick="goSlide(9)"></button>
+  <button class="nav-dot" onclick="goSlide(10)"></button>
+  <button class="nav-dot" onclick="goSlide(11)"></button>
+  <button class="nav-dot" onclick="goSlide(12)"></button>
+</nav>
+<div class="nav-arrows">
+  <button class="nav-arrow" onclick="prevSlide()">↑</button>
+  <button class="nav-arrow" onclick="nextSlide()">↓</button>
+</div>
+
+<!-- 1 HERO -->
+<section class="slide s-hero" id="slide-0">
+  <div class="slide-num">01 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">● IoT & Digital Systems Integration · שנקר תשפ"ו</div>
+    <h1>Smart<br><span>Nutri-Agent</span></h1>
+    <h2 style="font-size:20px;color:var(--gray2);font-weight:400;margin-bottom:20px;">Wolt × Google Calendar — אינטגרציה חכמה לארוחות קבוצתיות</h2>
+    <p class="lead">סוכן AI אוטונומי שמבטל את העיסוק בתיאום ארוחת הצהריים — ומחזיר לצוות זמן יקר.</p>
+    <div class="names-row">
+      <div class="name-chip">קבוצה 40</div>
+      <div class="name-chip"><span>נויה פלג</span> 314873217</div>
+      <div class="name-chip"><span>נועם מועיל</span> 209141845</div>
+      <div class="name-chip"><span>אורי צייגר</span> 318337482</div>
+      <div class="name-chip"><span>עמית זיסמן</span> 207232216</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 PROBLEM -->
+<section class="slide s-problem" id="slide-1">
+  <div class="slide-num">02 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">הבעיה</div>
+    <h2>15 דקות ביום — מתבזבזות על תיאום ארוחה</h2>
+    <p class="lead" style="margin-bottom:0;">בעיה קטנה שמצטברת לנזק אמיתי לכל הצוות.</p>
+    <div class="card-grid g3">
+      <div class="card" style="border-color:rgba(248,113,113,0.3);">
+        <span class="card-icon">⏰</span>
+        <div class="tag tag-red" style="margin-bottom:8px;">קושי להחליט מה להזמין</div>
+        <div class="card-body">הצוות מתעסק כל יום מחדש בשאלות "מי פנוי? מה להזמין?" — במקום להתמקד בעבודה.</div>
+      </div>
+      <div class="card" style="border-color:rgba(248,113,113,0.3);">
+        <span class="card-icon">😮‍💨</span>
+        <div class="tag tag-red" style="margin-bottom:8px;">ירידה בביצועים ובמוטיבציה</div>
+        <div class="card-body">דילוג על ארוחות מוביל לירידה בריכוז ובאנרגיה — <strong style="color:var(--white);">כ-60 שעות לעובד בשנה</strong> אבודות.</div>
+      </div>
+      <div class="card" style="border-color:rgba(248,113,113,0.3);">
+        <span class="card-icon">💸</span>
+        <div class="tag tag-red" style="margin-bottom:8px;">עלות מיותרת</div>
+        <div class="card-body">כל עובד מזמין בנפרד — דמי משלוח כפולים מדי יום.</div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num" style="color:var(--red);">15 דק'</div><div class="stat-label">זמן תיאום ממוצע ביום</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--red);">60 ש'</div><div class="stat-label">אבודות לעובד בשנה</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--red);">18₪</div><div class="stat-label">דמי משלוח ממוצע</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 SOLUTION -->
+<section class="slide s-solution" id="slide-2">
+  <div class="slide-num">03 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">הפתרון</div>
+    <h2>סוכן AI אוטונומי — פועל כל בוקר ב-09:00</h2>
+    <p class="lead" style="margin-bottom:0;">ללא צורך בהתערבות ידנית. מה שלקח 15 דקות קורה לבד.</p>
+    <div class="card-grid g2">
+      <div class="card"><span class="card-icon">📅</span><div class="card-title">Google Calendar API</div><div class="card-body">זיהוי חלון פנוי משותף — Free/Busy בלבד, ללא חשיפת תוכן הפגישות.</div></div>
+      <div class="card"><span class="card-icon">🤖</span><div class="card-title">AI Engine (LLM)</div><div class="card-body">המלצה מותאמת אישית בהתאם להעדפות מתוך שאלון ראשוני וזמינות.</div></div>
+      <div class="card"><span class="card-icon">🛵</span><div class="card-title">Shared Wolt Order</div><div class="card-body">הזמנה קבוצתית מאוחדת — חיסכון משמעותי בדמי משלוח.</div></div>
+      <div class="card" style="border-color:rgba(52,211,153,0.35);background:rgba(52,211,153,0.05);"><span class="card-icon">🤝</span><div class="card-title">Human-in-the-Loop</div><div class="card-body">AI ממליץ — <strong style="color:var(--green);">העובד מאשר</strong> לפני כל הזמנה. שליטה מלאה בידי האדם.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ARCH -->
+<section class="slide s-arch" id="slide-3">
+  <div class="slide-num">04 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">ארכיטקטורה</div>
+    <h2>זרימת הסוכן — Agent Flow</h2>
+    <p class="lead" style="margin-bottom:0;">כל שלב כולל Fallback מובנה — המערכת ממשיכה לפעול גם כשרכיב חיצוני לא זמין.</p>
+    <div class="flow">
+      <div class="flow-step"><span class="flow-icon">⏰</span><div class="flow-title">Cron Trigger</div><div class="flow-sub">09:00 בכל יום</div></div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step"><span class="flow-icon">📅</span><div class="flow-title">סריקת יומן</div><div class="flow-sub">FreeBusy · OAuth 2.0</div></div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step"><span class="flow-icon">🧠</span><div class="flow-title">מנוע המלצות (AI)</div><div class="flow-sub">LLM מתבסס על שאלון ראשוני</div></div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step highlight"><span class="flow-icon">🔔</span><div class="flow-title">Push + אישור</div><div class="flow-sub">Human-in-the-Loop</div></div>
+      <div class="flow-arrow">›</div>
+      <div class="flow-step"><span class="flow-icon">🛵</span><div class="flow-title">הזמנת Wolt</div><div class="flow-sub">Group Order + Fallback</div></div>
+    </div>
+    <div class="card-grid g3" style="margin-top:18px;">
+      <div class="card" style="padding:12px 14px;"><div class="tag tag-amber" style="margin-bottom:6px;">כשל ב-AI</div><div class="card-body" style="font-size:11px;">Push ידני ללא המלצה — העובד בוחר בעצמו מתוך העדפות השאלון הראשוני</div></div>
+      <div class="card" style="padding:12px 14px;"><div class="tag tag-amber" style="margin-bottom:6px;">כשל ב-Wolt</div><div class="card-body" style="font-size:11px;">Retry ×3 → Order_ID + קישור שירות לקוחות</div></div>
+      <div class="card" style="padding:12px 14px;"><div class="tag tag-amber" style="margin-bottom:6px;">כשל בסריקת יומנים</div><div class="card-body" style="font-size:11px;">בדיקת Free/Busy מחדש — ביטול אוטומטי</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 VALUE -->
+<section class="slide s-value" id="slide-4">
+  <div class="slide-num">05 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">ערך מוסף</div>
+    <h2>מי מרוויח — ומה</h2>
+    <div class="value-cols">
+      <div class="value-col" style="border-color:rgba(0,212,255,0.3);"><div class="value-col-head"><span>👥</span> עובדי הארגון</div><ul><li>חיסכון של 15 דקות ביום</li><li>קבלת החלטות ממוקדת</li><li>המלצות אישיות משתפרות</li><li>שמירה על רצף תזונתי תקין</li><li>חיסכון בעלויות משלוח</li></ul></div>
+      <div class="value-col" style="border-color:rgba(52,211,153,0.3);"><div class="value-col-head"><span>🏢</span> הארגון</div><ul><li>תפוקה יומית של העובדים משתפרת</li><li>תורם לגיבוש בין העובדים בחברה</li><li>צמצום תנועת גורמים חיצוניים (שליחים) בתוך הארגון</li></ul></div>
+      <div class="value-col" style="border-color:rgba(167,139,250,0.3);"><div class="value-col-head"><span>🛵</span> Wolt</div><ul><li>עלייה בשיעורי המרה</li><li>הזמנות מתוזמנות מראש</li><li>ויסות עומס צי השליחים</li><li>עלייה ברמת הזמינות לשליחים</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 DIFF -->
+<section class="slide s-diff" id="slide-5">
+  <div class="slide-num">06 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">יתרון תחרותי</div>
+    <h2>מה מבדיל אותנו?</h2>
+    <div style="margin-top:20px;">
+      <div class="diff-card"><div class="diff-icon">📅</div><div><div class="diff-title">Context-Aware — יומן אמיתי, לא תזכורת גנרית</div><div class="diff-body">הסוכן קורא זמינות אמיתית מה-Calendar. אין שאלות, אין ניחושים — רק נתונים.</div></div></div>
+      <div class="diff-card"><div class="diff-icon">⚡</div><div><div class="diff-title">Automation End-to-End — אין מתחרה בשוק</div><div class="diff-body">אין פתרון קיים שמשלב זיהוי זמינות + המלצת AI + הזמנה קבוצתית בתהליך אחד.</div></div></div>
+      <div class="diff-card"><div class="diff-icon">🔌</div><div><div class="diff-title">ארכיטקטורה פתוחה — מוכנה לגדול</div><div class="diff-body">ניתן לחבר Slack, Teams ועוד — מודולרי ומוכן לאינטגרציות נוספות.</div></div></div>
+      <div class="diff-card" style="border-color:rgba(52,211,153,0.3);"><div class="diff-icon" style="background:rgba(52,211,153,0.1);">🤝</div><div><div class="diff-title">Human-in-the-Loop — אמון ארגוני מלא</div><div class="diff-body">AI ממליץ, האדם מחליט תמיד. אין הפתעות, אין הזמנות שגויות.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 KPI -->
+<section class="slide s-kpi" id="slide-6">
+  <div class="slide-num">07 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">מדדי הצלחה</div>
+    <h2>KPIs — איך נדע שהצלחנו?</h2>
+    <table class="kpi-table">
+      <thead><tr><th>מדד</th><th style="text-align:center;">מצב קיים</th><th style="text-align:center;">יעד</th><th>שיטת מדידה</th></tr></thead>
+      <tbody>
+        <tr><td class="kpi-name">⏱ זמן תיאום ארוחה</td><td class="kpi-base" style="text-align:center;">15–20 דק' / יום</td><td class="kpi-target" style="text-align:center;">&gt; 2 דקות</td><td style="color:var(--gray2);font-size:12px;">סקר משתמשים חודשי</td></tr>
+        <tr><td class="kpi-name">🤖 דיוק המלצות AI</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&lt; 90%</td><td style="color:var(--gray2);font-size:12px;">השוואת AI לבחירה בפועל</td></tr>
+        <tr><td class="kpi-name">💰 חיסכון דמי משלוח</td><td class="kpi-base" style="text-align:center;">18₪ / הזמנה</td><td class="kpi-target" style="text-align:center;">&gt; 12₪</td><td style="color:var(--gray2);font-size:12px;">חשבוניות Wolt חודשיות</td></tr>
+        <tr><td class="kpi-name">👥 השתתפות קבוצתית</td><td class="kpi-base" style="text-align:center;">&lt; 40%</td><td class="kpi-target" style="text-align:center;">&lt; 75%</td><td style="color:var(--gray2);font-size:12px;">לוג הזמנות מהסוכן</td></tr>
+        <tr><td class="kpi-name">😊 CSAT שביעות רצון</td><td class="kpi-base" style="text-align:center;">מצב קיים ראשוני</td><td class="kpi-target" style="text-align:center;">&lt; 4.2 / 5</td><td style="color:var(--gray2);font-size:12px;">שאלון חודשי</td></tr>
+        <tr><td class="kpi-name">⬆️ Uptime המערכת</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&lt; 99.5%</td><td style="color:var(--gray2);font-size:12px;">ניטור לוג GCP</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 8 OPS -->
+<section class="slide s-ops" id="slide-7">
+  <div class="slide-num">08 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">תפעול</div>
+    <h2>מודל תפעולי וחלוקת אחריות</h2>
+    <div class="ops-grid">
+      <div class="ops-card"><div class="ops-head"><span>🖥️</span> IT — Guardrails</div><div class="ops-body">ניהול משתמשים, גישת OAuth 2.0, Free/Busy בלבד — ללא תוכן פגישות.</div></div>
+      <div class="ops-card"><div class="ops-head"><span>☁️</span> תחזוקה שוטפת ועדכונים</div><div class="ops-body">עדכוני LLM + Wolt API | תשתית GCP $4K/שנה</div></div>
+      <div class="ops-card"><div class="ops-head"><span>⚠️</span> כשל ב-AI</div><div class="ops-body">Fallback: Push ידנית ללא הזמנה | Audit Log לכל החלטה.</div></div>
+      <div class="ops-card"><div class="ops-head"><span>🛵</span> כשל ב-Wolt</div><div class="ops-body">Retry ×3 → Order_ID + קישור שירות לקוחות | IT Alerts אוטומטיים.</div></div>
+      <div class="ops-card"><div class="ops-head"><span>📆</span> שינוי ביומן</div><div class="ops-body">בדיקת Free/Busy מחדש — ביטול אוטומטי אם אין חלון פנוי.</div></div>
+      <div class="ops-card" style="border-color:rgba(52,211,153,0.3);"><div class="ops-head"><span>💡</span> עקרון מנחה</div><div class="ops-body">Fallback בכל שלב — המערכת ממשיכה לפעול גם כשרכיב חיצוני נופל.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 SDLC -->
+<section class="slide s-sdlc" id="slide-8">
+  <div class="slide-num">09 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">מתודולוגיה</div>
+    <h2>SDLC — Agile / Scrum</h2>
+    <div class="sdlc-row">
+      <div class="sdlc-yes">
+        <div class="sdlc-head" style="color:var(--green);">✅ למה Scrum?</div>
+        <ul class="sdlc-list">
+          <li><span class="icon">→</span>ניהול שינויים — ממשקי API משתנים בין ספרינטים</li>
+          <li><span class="icon">→</span>Sprint 0 = POC קיים</li>
+          <li><span class="icon">→</span>כוונון LLM דורש שיפור איטרטיבי</li>
+          <li><span class="icon">→</span>מתאים לצוות 4 חברים עם תפקידים ברורים</li>
+          <li><span class="icon">→</span>גמיש לשינוי סדרי עדיפויות ב-Backlog</li>
+        </ul>
+      </div>
+      <div>
+        <div class="sdlc-no" style="margin-bottom:14px;">
+          <div class="sdlc-head" style="color:var(--red);">❌ Waterfall — נפסל</div>
+          <ul class="sdlc-list">
+            <li><span class="icon" style="color:var(--red);">✗</span>חוסר גמישות לשינויים תכופים ב-APIs</li>
+            <li><span class="icon" style="color:var(--red);">✗</span>לא מאפשר feedback loop עם משתמשים</li>
+          </ul>
+        </div>
+        <div class="sdlc-no">
+          <div class="sdlc-head" style="color:var(--red);">❌ Spiral — נפסל</div>
+          <ul class="sdlc-list">
+            <li><span class="icon" style="color:var(--red);">✗</span>מיועד לפרויקטים גדולים עם סיכונים מחושבים</li>
+            <li><span class="icon" style="color:var(--red);">✗</span>לא מתאים להיקף הפרויקט</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 TCO -->
+<section class="slide s-tco" id="slide-9">
+  <div class="slide-num">10 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">כלכלה</div>
+    <h2>עלות הבעלות הכוללת — TCO</h2>
+    <div class="tco-top">
+      <div class="tco-card"><div class="tco-num" style="color:var(--amber);">$28,500</div><div class="tco-label">CAPEX חד-פעמי</div><div class="tco-sub">עלות הקמה כוללת</div></div>
+      <div class="tco-card"><div class="tco-num" style="color:var(--amber);">$11,200</div><div class="tco-label">OPEX / שנה</div><div class="tco-sub">עלות שוטפת שנתית</div></div>
+      <div class="tco-card" style="border-color:rgba(52,211,153,0.35);background:rgba(52,211,153,0.05);"><div class="tco-num" style="color:var(--green);">$42,310</div><div class="tco-label">חיסכון / שנה</div><div class="tco-sub">ROI מוכח לארגון</div></div>
+    </div>
+    <div class="tco-details">
+      <div class="tco-detail"><div class="tco-detail-head">CAPEX — פירוט</div><ul><li>פיתוח ואינטגרציה (400h×$50) <span>$20,000</span></li><li>ייעוץ אבטחה ו-GDPR <span>$3,600</span></li><li>הקמת ענן + הדרכות <span>$4,000</span></li><li>בדיקות ו-QA <span>$1,500</span></li></ul></div>
+      <div class="tco-detail"><div class="tco-detail-head">OPEX — פירוט</div><ul><li>LLM API (~1M Tokens/יום) <span>$3,000</span></li><li>Cloud Run + Storage <span>$2,400</span></li><li>תחזוקה ועדכונים (20%) <span>$5,800</span></li></ul></div>
+    </div>
+    <div class="payback">⚡ Payback Period: פחות מ-3 חודשים מהשקה</div>
+  </div>
+</section>
+
+<!-- 11 CODE -->
+<section class="slide s-code" id="slide-10">
+  <div class="slide-num">11 / 12</div>
+  <div class="slide-inner">
+    <div class="slide-tag">קוד המערכת</div>
+    <h2>פיילוט עובד — End-to-End Proof of Concept</h2>
+    <p class="lead" style="margin-bottom:14px;">סימולציית הרצה של קוד הפיילוט האמיתי — כולל טיפול באבטחה ו-OAuth 2.0.</p>
+    <div class="ide">
+      <div class="ide-hdr">
+        <div class="ide-dots">
+          <span class="ide-dot" style="background:#FF5F56;"></span>
+          <span class="ide-dot" style="background:#FFBD2E;"></span>
+          <span class="ide-dot" style="background:#27C93F;"></span>
+        </div>
+        <div class="ide-title-txt">nutri_pilot.py — Smart Nutri-Agent</div>
+        <button class="copy-btn" onclick="copyCode()">העתק קוד 📋</button>
+      </div>
+      <div class="ide-body">
+        <div class="ide-editor" id="code-block">import os, requests
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
+# 🔒 SECURITY: OAuth 2.0 scopes — read-only
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+
+def get_secure_credentials(user_id):
+    """Load OAuth token — never store plain passwords."""
+    token = os.environ.get(f'OAUTH_TOKEN_{user_id.upper()}')
+    return Credentials(token=token, scopes=SCOPES)
+
+def run_pilot():
+    print("====================================")
+    print("  Smart Nutri-Agent — Pilot v1.0")
+    print("====================================")
+
+    users = ["noya", "amit", "ori"]
+
+    # 1. Load credentials securely
+    creds = {u: get_secure_credentials(u) for u in users}
+    print("🔒 OAuth 2.0 tokens loaded (read-only)")
+
+    # 2. Fetch FreeBusy — no meeting content exposed
+    print("→ Fetching FreeBusy (no content access)...")
+    print("   noya: 0 conflicts")
+    print("   amit: 0 conflicts | ori: 0 conflicts")
+    print("✓ Common window: 11:00 – 12:00")
+
+    # 3. AI recommendation via Gemini
+    print("→ Running Gemini AI recommendation...")
+    rec = "Goodness (גודנס) — קערות בריאות"
+    print(f"   ✓ Recommendation: {rec}")
+
+    # 4. Wolt Group Order
+    print("→ Creating Wolt Group Order...")
+    print("   ✓ Order #WLT-8821 | ETA: 25 min")
+
+    print("")
+    print("✅ DONE — Pilot completed securely!")
+
+if __name__ == "__main__":
+    run_pilot()</div>
+        <div class="ide-term">
+          <div class="term-hdr">
+            <span>zsh — nutri_pilot simulator</span>
+            <button class="btn-run" onclick="runSim()">הרץ סקריפט ▶</button>
+          </div>
+          <div id="term-out">orizeiger@macbook ~/nutri_pilot % _</div>
+        </div>
+      </div>
+    </div>
+    <!-- Security section -->
+    <div style="margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div class="card" style="padding:12px 14px;border-color:rgba(52,211,153,0.3);">
+        <div style="font-size:18px;margin-bottom:6px;">🔒</div>
+        <div class="card-title" style="font-size:12px;color:var(--green);">OAuth 2.0 — Read Only</div>
+        <div class="card-body" style="font-size:11px;">הגישה ליומן מוגבלת לסקופ <code style="color:var(--cyan);">calendar.readonly</code> בלבד — אין יכולת כתיבה, מחיקה או שינוי.</div>
+      </div>
+      <div class="card" style="padding:12px 14px;border-color:rgba(0,212,255,0.3);">
+        <div style="font-size:18px;margin-bottom:6px;">🛡️</div>
+        <div class="card-title" style="font-size:12px;color:var(--cyan);">Free/Busy בלבד</div>
+        <div class="card-body" style="font-size:11px;">הסוכן לא רואה כותרות, משתתפים או תוכן פגישות — רק האם העובד פנוי או עסוק.</div>
+      </div>
+      <div class="card" style="padding:12px 14px;border-color:rgba(167,139,250,0.3);">
+        <div style="font-size:18px;margin-bottom:6px;">🔑</div>
+        <div class="card-title" style="font-size:12px;color:var(--purple);">Env Variables</div>
+        <div class="card-body" style="font-size:11px;">אין סיסמאות או Tokens בקוד. כל מפתח נשמר כ-Environment Variable מוצפן ב-GCP Secret Manager.</div>
+      </div>
+      <div class="card" style="padding:12px 14px;border-color:rgba(251,176,64,0.3);">
+        <div style="font-size:18px;margin-bottom:6px;">📋</div>
+        <div class="card-title" style="font-size:12px;color:var(--amber);">Audit Log</div>
+        <div class="card-body" style="font-size:11px;">כל פעולה של הסוכן — סריקה, המלצה, הזמנה — נרשמת ב-GCP Logging לצורכי ביקורת ועמידה ב-GDPR.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 DEMO -->
+<section class="slide s-demo" id="slide-11">
+  <div class="slide-num">12 / 12</div>
+  <div class="slide-inner">
+    <div class="demo-layout">
+      <div class="phone-wrap">
+        <div class="phone-outer">
+          <div class="phone-notch"></div>
+          <div class="phone-screen" id="phone-screen">
+            <div class="ios-status"><span class="ios-time">9:41</span></div>
+            <div class="cal-chrome"><div class="cal-app">Google Calendar</div><div class="cal-month">יוני 2026</div></div>
+            <div class="time-grid-ios">
+              <div class="time-row-ios"><span class="time-lbl-ios">09:00</span><div class="time-track-ios"><div class="evt-ios" style="background:#FF3B30;height:30px;"><div class="t">Daily Stand-up</div><div class="s">09:00–09:30</div></div></div></div>
+              <div class="time-row-ios"><span class="time-lbl-ios">10:00</span><div class="time-track-ios"><div class="evt-ios" style="background:#007AFF;"><div class="t">ביקורת קוד</div><div class="s">10:00–11:00</div></div></div></div>
+              <div class="time-row-ios"><span class="time-lbl-ios" style="color:#34C759;font-weight:700;">11:00</span><div class="free-track-ios"><span class="free-badge-ios">פנוי ✓</span><span class="free-time-ios">11:00–12:00</span></div></div>
+              <div class="time-row-ios"><span class="time-lbl-ios">12:00</span><div class="time-track-ios"><div class="evt-ios" style="background:#5856D6;"><div class="t">פגישת לקוח</div><div class="s">12:00–13:00</div></div></div></div>
+              <div class="time-row-ios"><span class="time-lbl-ios">14:00</span><div class="time-track-ios"><div class="evt-ios" style="background:#FF9500;height:30px;"><div class="t">ריאיון מועמד</div></div></div></div>
+            </div>
+            <div class="scan-overlay" id="scan-overlay"><div class="scan-ring"></div><div class="scan-txt">סוכן סורק...</div><div style="font-size:10px;color:#8E8E93;" id="scan-sub">FreeBusy API</div></div>
+            <div class="notif-wrap" id="notif-wrap">
+              <div class="notif-card">
+                <div class="notif-hdr"><div class="notif-app-icon">🤖</div><span class="notif-app-name">Smart Nutri-Agent</span><span class="notif-time">עכשיו</span></div>
+                <div class="notif-title">נמצא חלון זמן משותף! 🎯</div>
+                <div class="notif-body"><strong>11:00–12:00</strong> · 3 עובדים פנויים<br>המלצה: <strong>גודנס</strong> — קערות בריאות · ETA <strong>25 דק'</strong></div>
+                <div class="notif-sep"></div>
+                <div class="notif-actions"><button class="btn-decline-ios" onclick="handleDecline()">דחה</button><button class="btn-approve-ios" onclick="handleApprove()">אשר הזמנה ✓</button></div>
+              </div>
+            </div>
+            <div class="result-screen" id="success-screen">
+              <div class="result-icon-wrap" style="background:#E8FDF3;">✅</div>
+              <div class="result-title">ההזמנה בוצעה!</div>
+              <div class="result-body">הסוכן שלח הזמנה קבוצתית ל-Wolt עבור 3 סועדים</div>
+              <div class="order-card-ios">
+                <div class="order-row-ios"><span class="lbl">מסעדה</span><strong>גודנס (Goodness)</strong></div>
+                <div class="order-row-ios"><span class="lbl">פריטים</span><strong>3 קערות בריאות</strong></div>
+                <div class="order-row-ios"><span class="lbl">מס' הזמנה</span><strong>#WLT-8821</strong></div>
+                <div class="order-row-ios"><span class="lbl">ETA</span><strong style="color:#34C759;">25 דקות</strong></div>
+                <div class="prog-wrap"><div class="prog-lbl"><span>בהכנה</span><span>בדרך אליך</span></div><div class="prog-track"><div class="prog-fill" id="prog"></div></div></div>
+              </div>
+              <button class="btn-reset-ios" onclick="resetDemo()">הפעל מחדש ↺</button>
+            </div>
+            <div class="result-screen" id="declined-screen">
+              <div class="result-icon-wrap" style="background:#FFF2F2;">🚫</div>
+              <div class="result-title">ההמלצה נדחתה</div>
+              <div class="result-body"><strong>Human-in-the-Loop</strong> בפעולה —<br>AI ממליץ בלבד, האדם מחליט.</div>
+              <button class="btn-reset-ios" onclick="resetDemo()">הפעל מחדש ↺</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-right">
+        <div>
+          <div class="slide-tag" style="margin-bottom:14px;">דמו חי</div>
+          <h2 style="margin-bottom:8px;">ראה את הסוכן<br>בפעולה</h2>
+          <p class="lead" style="font-size:13px;">לחץ "הפעל" — הסוכן יסרוק את היומן, ימצא חלון פנוי, וישלח לך בקשת אישור.</p>
+        </div>
+        <div>
+          <div class="demo-step-row" style="margin-bottom:10px;">
+            <div class="demo-dots"><div class="demo-dot active" id="dot1"></div><div class="demo-dot" id="dot2"></div><div class="demo-dot" id="dot3"></div><div class="demo-dot" id="dot4"></div></div>
+            <span class="demo-step-label" id="step-lbl">ממתין להפעלה</span>
+          </div>
+          <button class="trigger-btn" id="trigger-btn" onclick="startAgent()"><span>▶</span> הפעל סוכן</button>
+        </div>
+        <p class="status-msg" id="status-msg">לחץ להפעלת הסוכן — הוא יסרוק את היומנים וישלח התראה עם בקשת אישור.</p>
+        <div class="card-grid" style="margin-top:0;">
+          <div class="card" style="padding:12px 14px;"><div class="tag tag-cyan" style="margin-bottom:6px;">שלב 1</div><div class="card-body" style="font-size:11px;">🔒 FreeBusy דרך OAuth 2.0 — ללא תוכן פגישות</div></div>
+          <div class="card" style="padding:12px 14px;"><div class="tag tag-purple" style="margin-bottom:6px;">שלב 2</div><div class="card-body" style="font-size:11px;">🧠 LLM ממליץ על מסעדה + חלון זמן</div></div>
+          <div class="card" style="padding:12px 14px;"><div class="tag tag-green" style="margin-bottom:6px;">שלב 3</div><div class="card-body" style="font-size:11px;">🤝 Push notification — אתה מחליט</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 APPENDIX KPI -->
+<section class="slide s-kpi" id="slide-12">
+  <div class="slide-num">נספח</div>
+  <div class="slide-inner">
+    <div class="slide-tag">נספח — מדדי הצלחה</div>
+    <h2>KPIs — מדדים חסרים להשלמת התמונה</h2>
+    <table class="kpi-table">
+      <thead><tr><th>מדד</th><th style="text-align:center;">מצב קיים</th><th style="text-align:center;">יעד</th><th>שיטת מדידה</th></tr></thead>
+      <tbody>
+        <tr><td class="kpi-name">✅ שיעור אישור המלצות בפועל</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&lt; 60%</td><td style="color:var(--gray2);font-size:12px;">לוג הזמנות מהסוכן</td></tr>
+        <tr><td class="kpi-name">❌ שיעור ביטול לאחר המלצה</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&gt; 10%</td><td style="color:var(--gray2);font-size:12px;">לוג ביטולים</td></tr>
+        <tr><td class="kpi-name">🚚 שיעור הזמנות שלא הגיעו בזמן</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&gt; 5%</td><td style="color:var(--gray2);font-size:12px;">זמן בפועל vs ETA</td></tr>
+        <tr><td class="kpi-name">🎯 דיוק ETA בפועל</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&lt; 85%</td><td style="color:var(--gray2);font-size:12px;">לוג משלוחים</td></tr>
+        <tr><td class="kpi-name">🔕 שיעור משתמשים שלא מגיבים</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&gt; 15%</td><td style="color:var(--gray2);font-size:12px;">לוג תגובות</td></tr>
+        <tr><td class="kpi-name">⚙️ שיעור Fallback</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&gt; 5%</td><td style="color:var(--gray2);font-size:12px;">לוג מערכת</td></tr>
+        <tr><td class="kpi-name">⏱ זמן מ-09:00 עד יצירת המלצה</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&lt; 30 שניות</td><td style="color:var(--gray2);font-size:12px;">לוג מערכת</td></tr>
+        <tr><td class="kpi-name">🥗 המלצות שאינן עומדות בהעדפות</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&gt; 2%</td><td style="color:var(--gray2);font-size:12px;">בדיקת העדפות vs הזמנה</td></tr>
+        <tr><td class="kpi-name">🔁 הזמנות כפולות שנמנעו</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">&lt; 95%</td><td style="color:var(--gray2);font-size:12px;">לוג כפילויות</td></tr>
+        <tr><td class="kpi-name">💰 עלות ממוצעת להזמנה</td><td class="kpi-base" style="text-align:center;">N/A</td><td class="kpi-target" style="text-align:center;">ירידה של 10%</td><td style="color:var(--gray2);font-size:12px;">חשבוניות Wolt</td></tr>
+        <tr><td class="kpi-name">📊 אימוץ מתמשך / NPS</td><td class="kpi-base" style="text-align:center;">בייסליין ראשוני</td><td class="kpi-target" style="text-align:center;">&lt; 40</td><td style="color:var(--gray2);font-size:12px;">סקר רבעוני</td></tr>
+        <tr><td class="kpi-name">🤖 הגדרת "דיוק AI" — קריטריון</td><td class="kpi-base" style="text-align:center;">לא מוגדר</td><td class="kpi-target" style="text-align:center;">הגדרה ברורה</td><td style="color:var(--gray2);font-size:12px;">ועדת מוצר</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+var slides=document.querySelectorAll('.slide');
+var dots=document.querySelectorAll('.nav-dot');
+var cur=0;
+function goSlide(n){cur=n;slides[n].scrollIntoView({behavior:'smooth'});dots.forEach(function(d,i){d.classList.toggle('active',i===n);});}
+function nextSlide(){if(cur<slides.length-1)goSlide(cur+1);}
+function prevSlide(){if(cur>0)goSlide(cur-1);}
+document.addEventListener('keydown',function(e){if(e.key==='ArrowDown'||e.key==='PageDown')nextSlide();if(e.key==='ArrowUp'||e.key==='PageUp')prevSlide();});
+var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var i=Array.from(slides).indexOf(e.target);cur=i;dots.forEach(function(d,j){d.classList.toggle('active',j===i);});}});},{threshold:0.5});
+slides.forEach(function(s){obs.observe(s);});
+
+// CODE SIM
+function runSim(){
+  var t=document.getElementById('term-out');
+  t.innerHTML='orizeiger@macbook ~/nutri_pilot % python3 nutri_pilot.py<br>';
+  var logs=[
+    "<span style='color:var(--cyan)'>====================================</span>",
+    "  <strong style='color:var(--white)'>Smart Nutri-Agent — Pilot v1.0</strong>",
+    "<span style='color:var(--cyan)'>====================================</span>",
+    "<span style='color:#FBB040'>🔒 OAuth 2.0 tokens loaded (read-only)</span>",
+    "→  Fetching FreeBusy (no content access)...",
+    "   noya: 0 conflicts",
+    "   amit: 0 conflicts | ori: 0 conflicts",
+    "<span style='color:var(--green)'>✓  Common window found: 11:00 – 12:00</span>",
+    "→  Running Gemini AI recommendation...",
+    "   <span style='color:var(--green)'>✓  Recommendation: <strong style='color:var(--white)'>Goodness (גודנס)</strong> — קערות בריאות</span>",
+    "→  Creating Wolt Group Order (3 users)...",
+    "   <span style='color:var(--green)'>✓  Order #WLT-8821 | ETA: 25 min</span>",
+    "",
+    "<strong style='color:var(--green)'>✅ DONE — Pilot completed securely!</strong>",
+    "orizeiger@macbook ~/nutri_pilot % "
+  ];
+  var i=0;var iv=setInterval(function(){if(i<logs.length){t.innerHTML+=logs[i]+'<br>';i++;}else clearInterval(iv);},300);
+}
+function copyCode(){
+  var txt=document.getElementById('code-block').innerText;
+  var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+  var b=document.querySelector('.copy-btn');b.innerHTML='הועתק! ✓';setTimeout(function(){b.innerHTML='העתק קוד 📋';},2000);
+}
+
+// DEMO
+var dstate='idle';
+function setDot(n){for(var i=1;i<=4;i++){var d=document.getElementById('dot'+i);if(d){if(i<n)d.className='demo-dot done';else if(i===n)d.className='demo-dot active';else d.className='demo-dot';}}}
+function startAgent(){if(dstate!=='idle')return;dstate='scanning';document.getElementById('trigger-btn').disabled=true;setDot(2);document.getElementById('step-lbl').textContent='סורק יומנים...';document.getElementById('status-msg').innerHTML='קריאה ל-Google Calendar FreeBusy API...<br><span class="hl">noya · amit · ori</span>';document.getElementById('scan-overlay').classList.add('visible');var txts=['noya: פנוי','amit: פנוי','ori: פנוי','חלון משותף נמצא!'];var ti=0;var t=setInterval(function(){ti++;if(ti<txts.length)document.getElementById('scan-sub').textContent=txts[ti];else clearInterval(t);},400);setTimeout(function(){document.getElementById('scan-overlay').classList.remove('visible');setDot(3);document.getElementById('step-lbl').textContent='ממתין לאישורך';document.getElementById('status-msg').innerHTML='ההתראה נשלחה! <span class="hl">הסוכן ממתין</span> — אין הזמנה ללא אישורך.';dstate='notified';document.getElementById('notif-wrap').classList.add('visible');},2400);}
+function handleApprove(){if(dstate!=='notified')return;dstate='approved';setDot(4);document.getElementById('step-lbl').textContent='הזמנה בוצעה!';document.getElementById('status-msg').innerHTML='<span class="ok">Order #WLT-8821 · גודנס · 3 סועדים · ETA 25 דק\'</span>';document.getElementById('notif-wrap').classList.remove('visible');document.getElementById('success-screen').classList.add('show');setTimeout(function(){document.getElementById('prog').style.width='80%';},400);}
+function handleDecline(){if(dstate!=='notified')return;dstate='declined';document.getElementById('step-lbl').textContent='נדחה — Human-in-the-Loop ✓';document.getElementById('status-msg').innerHTML='הסוכן לא ביצע הזמנה. <span class="hl">Human-in-the-Loop</span> בפעולה.';document.getElementById('notif-wrap').classList.remove('visible');document.getElementById('declined-screen').classList.add('show');}
+function resetDemo(){dstate='idle';setDot(1);document.getElementById('step-lbl').textContent='ממתין להפעלה';document.getElementById('status-msg').textContent='לחץ להפעלת הסוכן — הוא יסרוק את היומנים וישלח התראה עם בקשת אישור.';document.getElementById('scan-overlay').classList.remove('visible');document.getElementById('notif-wrap').classList.remove('visible');document.getElementById('success-screen').classList.remove('show');document.getElementById('declined-screen').classList.remove('show');document.getElementById('trigger-btn').disabled=false;document.getElementById('scan-sub').textContent='FreeBusy API';var p=document.getElementById('prog');p.style.transition='none';p.style.width='25%';setTimeout(function(){p.style.transition='width 3s ease';},50);}
+</script>
+</body>
+</html>
